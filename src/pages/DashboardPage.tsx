@@ -13,7 +13,7 @@ const DashboardPage = () => {
   return (
     <div className="page-container">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Welcome back, Asela</h1>
+        <h1 className="text-3xl font-bold">Welcome back, Senura</h1>
         <p className="text-muted-foreground">Here's what's happening with your customer data today.</p>
       </div>
       
