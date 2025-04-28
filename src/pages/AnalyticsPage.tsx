@@ -1,54 +1,59 @@
 
-import { 
-  Card, 
-  CardContent, 
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
   CardDescription,
-  CardHeader, 
-  CardTitle 
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { BarChart3, PieChart, LineChart, Calendar, Download, Filter } from "lucide-react";
-import { 
-  LineChart as ReLineChart, 
-  Line, 
-  BarChart as ReBarChart, 
-  Bar, 
-  PieChart as RePieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend 
+import {
+  LineChart as ReLineChart,
+  Line,
+  BarChart as ReBarChart,
+  Bar,
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend
 } from "recharts";
 import { segmentData, revenueData, customerGrowthData, segmentTrendData, monthLabels } from "@/data/mockData";
+import SegmentationVisualizer from "@/components/segmentation/SegmentationVisualizer";
 
 const AnalyticsPage = () => {
+  const [activeTab, setActiveTab] = useState("overview");
+
   return (
     <div className="page-container">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Analytics</h1>
         <p className="text-muted-foreground">Comprehensive data analysis and reporting.</p>
       </div>
-      
+
       <div className="flex items-center justify-between mb-6">
-        <Tabs defaultValue="overview">
+        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="segmentation">Segmentation</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
           </TabsList>
         </Tabs>
-        
+
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -64,8 +69,9 @@ const AnalyticsPage = () => {
           </Button>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      {activeTab === "overview" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -93,7 +99,7 @@ const AnalyticsPage = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -129,7 +135,7 @@ const AnalyticsPage = () => {
                 </RePieChart>
               </ResponsiveContainer>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2 mt-4">
               {segmentData.map((segment) => (
                 <div key={segment.name} className="flex items-center gap-2">
@@ -140,7 +146,7 @@ const AnalyticsPage = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -168,7 +174,7 @@ const AnalyticsPage = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -206,6 +212,11 @@ const AnalyticsPage = () => {
           </CardContent>
         </Card>
       </div>
+      )}
+
+      {activeTab === "segmentation" && (
+        <SegmentationVisualizer />
+      )}
     </div>
   );
 };

@@ -3,40 +3,48 @@ import { useState } from "react";
 import { UploadCloud, FileSpreadsheet, Database, ChevronRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from "@/components/ui/tabs";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
-import { 
+import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { uploadAndValidateFile } from "@/services/api";
 
 const DataImportPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [mappingDone, setMappingDone] = useState(false);
   const [validationDone, setValidationDone] = useState(false);
   const [importSource, setImportSource] = useState("file");
-  
+  const [isValidating, setIsValidating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [validationResults, setValidationResults] = useState<{
+    processed: number;
+    failed: number;
+    errors: string[];
+  } | null>(null);
+
   // Handle file selection
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -47,46 +55,81 @@ const DataImportPage = () => {
       setValidationDone(false);
     }
   };
-  
+
   // Handle mapping completion
   const handleCompleteMappingClick = () => {
     setMappingDone(true);
     toast.success("Column mapping completed");
   };
-  
+
   // Handle validation
-  const handleValidateClick = () => {
-    // Simulate validation
+  const handleValidateClick = async () => {
+    if (!selectedFile) {
+      toast.error("No file selected");
+      return;
+    }
+
+    setIsValidating(true);
     toast.info("Validating data...");
-    setTimeout(() => {
+
+    try {
+      const result = await uploadAndValidateFile(selectedFile);
+
+      setValidationResults({
+        processed: result.processed || 0,
+        failed: result.failed || 0,
+        errors: result.errors || []
+      });
+
       setValidationDone(true);
-      toast.success("Data validation successful");
-    }, 1500);
+
+      if (result.failed > 0) {
+        toast.warning(`Validation completed with ${result.failed} errors`);
+      } else {
+        toast.success("Data validation successful");
+      }
+    } catch (error) {
+      console.error("Validation error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to validate data");
+    } finally {
+      setIsValidating(false);
+    }
   };
-  
+
   // Handle import
   const handleImportClick = () => {
-    toast.info("Importing data...");
-    // Simulate import process
+    // The actual import is already done during validation in the backend
+    // We just need to inform the user that the process is complete
+    setIsImporting(true);
+    toast.info("Finalizing import...");
+
+    // Small delay to show the user something is happening
     setTimeout(() => {
-      toast.success("Data successfully imported");
-    }, 2000);
+      setIsImporting(false);
+      toast.success("Data successfully imported to MongoDB");
+
+      // Reset the form for a new import
+      setSelectedFile(null);
+      setMappingDone(false);
+      setValidationDone(false);
+      setValidationResults(null);
+    }, 1000);
   };
-  
+
   return (
     <div className="page-container">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Data Import</h1>
         <p className="text-muted-foreground">Import and process customer data from various sources.</p>
       </div>
-      
+
       <Tabs defaultValue="file" value={importSource} onValueChange={setImportSource} className="space-y-4">
         <TabsList className="grid grid-cols-3 md:w-[400px]">
           <TabsTrigger value="file">File Upload</TabsTrigger>
           <TabsTrigger value="api">API/Website</TabsTrigger>
           <TabsTrigger value="pos">POS System</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="file" className="space-y-4">
           <div className="grid md:grid-cols-4 gap-4">
             <div className="md:col-span-1 space-y-4">
@@ -126,7 +169,7 @@ const DataImportPage = () => {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">File Requirements</CardTitle>
@@ -139,7 +182,7 @@ const DataImportPage = () => {
                 </CardContent>
               </Card>
             </div>
-            
+
             <div className="md:col-span-3 space-y-4">
               {!selectedFile ? (
                 <Card>
@@ -205,7 +248,7 @@ const DataImportPage = () => {
                       </div>
                     </CardContent>
                   </Card>
-                  
+
                   <Card>
                     <CardHeader>
                       <CardTitle>Column Mapping</CardTitle>
@@ -229,7 +272,7 @@ const DataImportPage = () => {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <label className="text-sm font-medium">Last Name</label>
                             <Select defaultValue="columnB">
@@ -243,7 +286,7 @@ const DataImportPage = () => {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <label className="text-sm font-medium">Email</label>
                             <Select defaultValue="columnC">
@@ -257,7 +300,7 @@ const DataImportPage = () => {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <label className="text-sm font-medium">Phone</label>
                             <Select defaultValue="columnD">
@@ -273,7 +316,7 @@ const DataImportPage = () => {
                             </Select>
                           </div>
                         </div>
-                        
+
                         {!mappingDone && (
                           <div className="flex justify-end mt-4">
                             <Button onClick={handleCompleteMappingClick}>
@@ -284,7 +327,7 @@ const DataImportPage = () => {
                       </div>
                     </CardContent>
                   </Card>
-                  
+
                   {mappingDone && (
                     <Card>
                       <CardHeader>
@@ -303,10 +346,10 @@ const DataImportPage = () => {
                                 Please validate your data before importing.
                               </AlertDescription>
                             </Alert>
-                            
+
                             <div className="flex justify-end mt-4">
-                              <Button onClick={handleValidateClick}>
-                                Validate Data
+                              <Button onClick={handleValidateClick} disabled={isValidating}>
+                                {isValidating ? "Validating..." : "Validate Data"}
                               </Button>
                             </div>
                           </>
@@ -319,22 +362,36 @@ const DataImportPage = () => {
                                 Your data is valid and ready to be imported.
                               </AlertDescription>
                             </Alert>
-                            
+
                             <div className="grid grid-cols-2 gap-4 mt-4">
                               <div className="rounded-md border p-3 bg-gray-50">
                                 <div className="text-sm font-medium mb-1">Valid Records</div>
-                                <div className="text-2xl font-bold text-green-600">98</div>
+                                <div className="text-2xl font-bold text-green-600">{validationResults?.processed || 0}</div>
                               </div>
-                              
+
                               <div className="rounded-md border p-3 bg-gray-50">
                                 <div className="text-sm font-medium mb-1">Error Records</div>
-                                <div className="text-2xl font-bold text-amber-600">2</div>
+                                <div className="text-2xl font-bold text-amber-600">{validationResults?.failed || 0}</div>
                               </div>
                             </div>
-                            
+
+                            {validationResults?.errors && validationResults.errors.length > 0 && (
+                              <div className="mt-4 border rounded-md p-3 bg-gray-50 max-h-40 overflow-y-auto">
+                                <div className="text-sm font-medium mb-2">Validation Errors:</div>
+                                <ul className="text-xs text-red-600 space-y-1">
+                                  {validationResults.errors.slice(0, 10).map((error, index) => (
+                                    <li key={index}>{error}</li>
+                                  ))}
+                                  {validationResults.errors.length > 10 && (
+                                    <li>...and {validationResults.errors.length - 10} more errors</li>
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+
                             <div className="flex justify-end mt-4">
-                              <Button onClick={handleImportClick}>
-                                Import Data
+                              <Button onClick={handleImportClick} disabled={isImporting}>
+                                {isImporting ? "Importing..." : "Import Data"}
                               </Button>
                             </div>
                           </>
@@ -347,7 +404,7 @@ const DataImportPage = () => {
             </div>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="api" className="space-y-4">
           <Card>
             <CardHeader>
@@ -370,7 +427,7 @@ const DataImportPage = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="pos" className="space-y-4">
           <Card>
             <CardHeader>
