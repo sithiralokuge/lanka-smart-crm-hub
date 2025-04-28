@@ -761,4 +761,4 @@ const saveSegmentsToStorage = (segments: Segment[]): void => {
 };
 
 // Initialize mock segments from storage
-let mockSegments: Segment[] = loadSegmentsFromStorage();
+const mockSegments: Segment[] = loadSegmentsFromStorage();
